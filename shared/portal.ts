@@ -104,12 +104,28 @@ export type PaymentMethodKind =
   | 'card'
   | 'outlet';
 
+/**
+ * A place the customer can pay to.
+ *
+ * The destination fields are the panel's own values, passed through unchanged
+ * — this is money moving to a real account, so nothing here is ever derived,
+ * defaulted or guessed. When the panel holds no account number the field is
+ * null and the UI says so, rather than showing something that looks payable.
+ */
 export interface PaymentMethod {
   /** Stable key for selection state. */
   id: string;
   name: string;
   note: string;
   kind: PaymentMethodKind;
+  /** Bank or issuer, e.g. "BCA". */
+  bank: string | null;
+  /** Destination account or virtual-account number, exactly as configured. */
+  accountNumber: string | null;
+  /** Account holder — "atas nama". */
+  accountName: string | null;
+  /** QRIS payload or image URL, when the panel supplies one. */
+  qr: string | null;
 }
 
 export interface UsageMonth {

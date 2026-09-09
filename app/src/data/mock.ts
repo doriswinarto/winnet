@@ -224,36 +224,57 @@ const notices: NetworkNotice[] = [
   },
 ];
 
+/**
+ * Payment destinations are deliberately empty here.
+ *
+ * Every other field in this file is the design's content standing in for live
+ * data, which is harmless. An account number is not: a customer who transfers
+ * to a number this app invented has lost real money. So the mock carries no
+ * bank, no account number and no QR, and the payment screen refuses to show a
+ * destination it did not get from the panel.
+ */
+const NO_DESTINATION = {
+  bank: null,
+  accountNumber: null,
+  accountName: null,
+  qr: null,
+};
+
 const methods: PaymentMethod[] = [
   {
     id: 'qris',
     name: 'QRIS',
     note: 'Scan sekali, semua e-wallet',
     kind: 'qris',
+    ...NO_DESTINATION,
   },
   {
     id: 'va',
     name: 'Virtual Account',
     note: 'BCA · Mandiri · BNI · BRI',
     kind: 'va',
+    ...NO_DESTINATION,
   },
   {
     id: 'ewallet',
     name: 'E-Wallet',
     note: 'GoPay, OVO, DANA, ShopeePay',
     kind: 'ewallet',
+    ...NO_DESTINATION,
   },
   {
     id: 'transfer',
     name: 'Transfer Bank',
     note: 'Verifikasi manual 1×24 jam',
     kind: 'transfer',
+    ...NO_DESTINATION,
   },
   {
     id: 'card',
     name: 'Kartu Kredit/Debit',
     note: 'Visa, Mastercard, JCB',
     kind: 'card',
+    ...NO_DESTINATION,
   },
 ];
 
@@ -263,6 +284,7 @@ const outlets: PaymentMethod[] = [
     name: 'Indomaret Cihampelas',
     note: 'Jl. Cihampelas No. 90 · buka 24 jam',
     kind: 'outlet',
+    ...NO_DESTINATION,
   },
 ];
 

@@ -1,4 +1,5 @@
 import { Card, IconTile, Tappable } from '../components/primitives';
+import { PaymentDestination } from '../components/PaymentDestination';
 import { usePortal } from '../api/PortalContext';
 import { PAY_STEPS } from '../data/billing';
 import { methodStyle } from '../data/derive';
@@ -212,10 +213,13 @@ function PickMethod() {
 }
 
 function Confirm() {
-  const { method, payNext, payBack } = useApp();
+  const { method, payNext, payBack, showToast } = useApp();
   const { snapshot } = usePortal();
   const { currentInvoice, plan, methods, outlets } = snapshot;
   const chosen = [...methods, ...outlets].find((m) => m.id === method);
+  // Nothing to have paid to means nothing to confirm — leaving the button
+  // live would invite a customer to report a transfer they could not make.
+  const payable = !!(chosen?.accountNumber || chosen?.qr);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -261,50 +265,29 @@ function Confirm() {
         </div>
       </Card>
 
-      <div
-        style={{
-          background: 'var(--card2)',
-          border: '1px dashed var(--bd)',
-          borderRadius: 18,
-          padding: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <div
-          style={{
-            width: 120,
-            height: 120,
-            borderRadius: 14,
-            background:
-              'repeating-conic-gradient(var(--tx) 0 25%,var(--card) 0 50%)',
-            backgroundSize: '14px 14px',
-            boxShadow: 'var(--sh)',
-          }}
-        />
-        <div
-          className="mono"
-          style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--tx2)' }}
-        >
-          [ QRIS · berlaku 14:59 ]
-        </div>
-      </div>
+      <PaymentDestination
+        method={chosen}
+        amount={currentInvoice?.amount ?? '—'}
+        onCopied={(label, ok) =>
+          showToast(ok ? `${label} disalin` : `Tidak dapat menyalin ${label}`)
+        }
+      />
 
       <Tappable
         onClick={payNext}
+        disabled={!payable}
         style={{
           height: 54,
           borderRadius: 15,
-          background: 'var(--yel)',
-          color: '#3b2a00',
+          background: payable ? 'var(--yel)' : 'var(--card2)',
+          color: payable ? '#3b2a00' : 'var(--tx2)',
+          border: payable ? 'none' : '1.5px solid var(--bd)',
           fontSize: 15.5,
           fontWeight: 800,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: 'var(--glowY)',
+          boxShadow: payable ? 'var(--glowY)' : 'none',
         }}
       >
         Saya Sudah Bayar

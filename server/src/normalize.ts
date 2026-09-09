@@ -287,6 +287,21 @@ function methodKind(raw: unknown, name: string): PaymentMethodKind {
   return 'transfer';
 }
 
+/**
+ * Reads a destination field, or null.
+ *
+ * Deliberately not routed through `str()`: its fallback machinery is for
+ * cosmetic gaps, and an account number is not cosmetic. A missing one must
+ * arrive as null so the UI can say the account is not configured, rather than
+ * as an empty string that renders as a blank line next to "transfer to".
+ */
+function destination(r: Parameters<typeof pick>[0], keys: string[]): string | null {
+  const v = pick(r, keys);
+  if (v === undefined) return null;
+  const s = String(v).trim();
+  return s.length > 0 ? s : null;
+}
+
 export function normalizePaymentMethods(
   raw: unknown,
   opts: { outlet?: boolean } = {},
@@ -309,6 +324,32 @@ export function normalizePaymentMethods(
       kind: opts.outlet
         ? 'outlet'
         : methodKind(pick(r, ['jenis', 'type', 'kind', 'channel']), name),
+      bank: destination(r, ['bank', 'nama_bank', 'bank_name', 'penerbit', 'issuer']),
+      accountNumber: destination(r, [
+        'no_rekening',
+        'nomor_rekening',
+        'rekening',
+        'norek',
+        'account_number',
+        'nomor_va',
+        'va_number',
+        'virtual_account',
+      ]),
+      accountName: destination(r, [
+        'atas_nama',
+        'nama_pemilik',
+        'account_name',
+        'account_holder',
+        'pemilik',
+      ]),
+      qr: destination(r, [
+        'qris',
+        'qr',
+        'qr_string',
+        'qr_payload',
+        'qr_image',
+        'qr_url',
+      ]),
     };
   });
 }

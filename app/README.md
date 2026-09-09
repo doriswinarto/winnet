@@ -129,10 +129,31 @@ the resolution is stated rather than faked:
 | Daily usage chart (Sen–Min) | The panel exposes `usageByMonth` only, so the chart is monthly. Same component, same look. |
 | "Rata-rata harian" tile | Restated per month, the granularity the data has. |
 | Ticket conversation + composer | `tickets` returns rows; there is no message thread and no reply endpoint. The thread is illustrative and the composer raises a toast. |
-| Payment: QRIS code, "Saya Sudah Bayar" | `paymentMethods` / `paymentOutlets` are read-only and there is no create-payment write. Method selection is live; the confirm and success steps are presentational. |
+| Payment: create a transaction | No create-payment write exists. The app shows where to pay — bank, account number, atas nama, QRIS — from `paymentMethods` / `paymentOutlets`, and the customer transfers manually. "Saya Sudah Bayar" records nothing server-side yet. |
 | Notification centre | No notifications section. The feed is `networkNotices` plus a billing entry derived from the outstanding invoice; the design's promo and receipt notices have no source and are not invented. |
 | Profil → Keamanan tab | No security section. Derived from what the login flow itself establishes. |
 | "Ubah Password" button | Nothing to change — replaced with support contact. |
+
+## Payment destinations
+
+The account a customer transfers to is the panel's, passed through unchanged —
+`bank`, `accountNumber`, `accountName` and `qr` on `PaymentMethod` are read
+straight from `paymentMethods` / `paymentOutlets` and never derived, defaulted
+or reformatted. A wrong number here sends someone's money somewhere it cannot
+be recovered from, so:
+
+- **The mock carries no account numbers at all.** Every other mock value is the
+  design's content standing in for live data, which is harmless; an invented
+  account number is not.
+- **A missing destination fails closed.** The screen says the account is not
+  available and warns against transferring, rather than rendering a blank line
+  under "transfer to", and *Saya Sudah Bayar* is disabled — there is nothing to
+  have paid to.
+- **QRIS payloads are rendered as a scannable QR** (`components/QrCode.tsx`).
+  The panel returns the raw EMV string, which as text is unpayable.
+
+Bank, account number, holder and the exact amount each have a copy button —
+transfers here are typed by hand into a banking app.
 
 The reverse gap: `/tulis/speedtest` exists and is wired end to end, but the
 design has no speed-test screen. The Service Status gauge is a passive reading,
