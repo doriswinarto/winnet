@@ -1,5 +1,6 @@
 import type { TicketStatus } from '../types';
 
+
 export type TicketFilter = 'Semua' | TicketStatus;
 
 export const TICKET_FILTERS: TicketFilter[] = [
@@ -9,47 +10,11 @@ export const TICKET_FILTERS: TicketFilter[] = [
   'Selesai',
 ];
 
-export interface Ticket {
-  id: string;
-  cat: string;
-  subject: string;
-  date: string;
-  status: TicketStatus;
-}
-
-export const TICKETS: Ticket[] = [
-  {
-    id: 'TKT-2026-0912',
-    cat: 'Internet Gangguan',
-    subject: 'Internet putus sejak pagi',
-    date: '12 Sep 2026, 08:14',
-    status: 'Diproses',
-  },
-  {
-    id: 'TKT-2026-0905',
-    cat: 'Lambat',
-    subject: 'Kecepatan turun di jam malam',
-    date: '5 Sep 2026, 20:41',
-    status: 'Terbuka',
-  },
-  {
-    id: 'TKT-2026-0822',
-    cat: 'Billing',
-    subject: 'Tagihan tidak sesuai paket',
-    date: '22 Agu 2026, 10:03',
-    status: 'Selesai',
-  },
-];
-
-export const TICKET_DETAIL = {
-  id: 'TKT-2026-0912',
-  subject: 'Internet putus sejak pagi',
-  status: 'Diproses' as TicketStatus,
-  cat: 'Internet Gangguan',
-  created: '12 Sep 2026, 08:14',
-  technician: 'Andi P.',
-};
-
+/**
+ * Illustrative thread for the ticket detail screen. The panel returns ticket
+ * rows only — there is no messages section and no endpoint to post a reply —
+ * so this content is not live and the composer raises a toast.
+ */
 export interface ChatMessage {
   name: string;
   msg: string;

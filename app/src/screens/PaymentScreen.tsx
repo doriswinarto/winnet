@@ -1,12 +1,7 @@
 import { Card, IconTile, Tappable } from '../components/primitives';
-import {
-  CURRENT_INVOICE,
-  PAYMENT_METHODS,
-  PAY_STEPS,
-  RECEIPT_TIME,
-  RECEIPT_TRX,
-} from '../data/billing';
-import { PLAN } from '../data/customer';
+import { usePortal } from '../api/PortalContext';
+import { PAY_STEPS } from '../data/billing';
+import { methodStyle } from '../data/derive';
 import { useApp } from '../state/AppContext';
 import type { KeyValue } from '../types';
 
@@ -82,6 +77,9 @@ function SummaryRow({ rows, dense }: { rows: KeyValue[]; dense?: boolean }) {
 
 function PickMethod() {
   const { method, setMethod, payNext } = useApp();
+  const { snapshot } = usePortal();
+  const { currentInvoice, methods, outlets } = snapshot;
+  const all = [...methods, ...outlets];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -107,7 +105,7 @@ function PickMethod() {
               letterSpacing: '-.03em',
             }}
           >
-            {CURRENT_INVOICE.amount}
+            {currentInvoice?.amount ?? '—'}
           </div>
         </div>
         <div
@@ -119,9 +117,7 @@ function PickMethod() {
             textAlign: 'right',
           }}
         >
-          INV/2026/09
-          <br />
-          /4472
+          {currentInvoice?.no ?? '—'}
         </div>
       </Card>
 
@@ -134,16 +130,17 @@ function PickMethod() {
         aria-label="Metode pembayaran"
         style={{ display: 'flex', flexDirection: 'column', gap: 11 }}
       >
-        {PAYMENT_METHODS.map((m) => {
-          const on = m.name === method;
+        {all.map((m) => {
+          const on = m.id === method;
+          const style = methodStyle(m.kind);
           return (
             <button
-              key={m.name}
+              key={m.id}
               type="button"
               role="radio"
               aria-checked={on}
               className="tapglow"
-              onClick={() => setMethod(m.name)}
+              onClick={() => setMethod(m.id)}
               style={{
                 width: '100%',
                 background: 'var(--card)',
@@ -159,8 +156,8 @@ function PickMethod() {
               <IconTile
                 size={38}
                 radius={11}
-                bg={m.bg}
-                fg={m.fg}
+                bg={style.bg}
+                fg={style.fg}
                 dot={14}
                 dotRadius="4px"
               />
@@ -216,6 +213,9 @@ function PickMethod() {
 
 function Confirm() {
   const { method, payNext, payBack } = useApp();
+  const { snapshot } = usePortal();
+  const { currentInvoice, plan, methods, outlets } = snapshot;
+  const chosen = [...methods, ...outlets].find((m) => m.id === method);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -232,9 +232,9 @@ function Confirm() {
         </div>
         <SummaryRow
           rows={[
-            { k: 'Metode', v: method },
-            { k: 'No. Invoice', v: CURRENT_INVOICE.no },
-            { k: 'Paket', v: `Fiber ${PLAN.speed} ${PLAN.unit}` },
+            { k: 'Metode', v: chosen?.name ?? '—' },
+            { k: 'No. Invoice', v: currentInvoice?.no ?? '—' },
+            { k: 'Paket', v: `Fiber ${plan.speed} ${plan.unit}` },
             { k: 'Biaya admin', v: 'Rp0' },
           ]}
         />
@@ -256,7 +256,7 @@ function Confirm() {
               letterSpacing: '-.03em',
             }}
           >
-            {CURRENT_INVOICE.amount}
+            {currentInvoice?.amount ?? '—'}
           </span>
         </div>
       </Card>
@@ -329,6 +329,9 @@ function Confirm() {
 
 function Success() {
   const { method, go, showToast } = useApp();
+  const { snapshot } = usePortal();
+  const { currentInvoice, methods, outlets } = snapshot;
+  const chosen = [...methods, ...outlets].find((m) => m.id === method);
 
   return (
     <div
@@ -396,10 +399,10 @@ function Success() {
         <SummaryRow
           dense
           rows={[
-            { k: 'No. Transaksi', v: RECEIPT_TRX },
-            { k: 'Metode', v: method },
-            { k: 'Waktu', v: RECEIPT_TIME },
-            { k: 'Jumlah', v: CURRENT_INVOICE.amount },
+            { k: 'No. Invoice', v: currentInvoice?.no ?? '—' },
+            { k: 'Metode', v: chosen?.name ?? '—' },
+            { k: 'Periode', v: currentInvoice?.period ?? '—' },
+            { k: 'Jumlah', v: currentInvoice?.amount ?? '—' },
           ]}
         />
       </Card>

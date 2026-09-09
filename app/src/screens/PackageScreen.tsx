@@ -1,10 +1,31 @@
 import { SectionTitle, Tappable } from '../components/primitives';
-import { PLAN } from '../data/customer';
-import { BENEFITS, PACKAGES } from '../data/packages';
+import { requestUpgrade } from '../api/bff';
+import { usePortal } from '../api/PortalContext';
+import { BENEFITS } from '../data/packages';
 import { useApp } from '../state/AppContext';
 
 export function PackageScreen() {
   const { showToast } = useApp();
+  const { snapshot, source, refresh } = usePortal();
+  const { plan, packages, pendingUpgrade } = snapshot;
+
+  async function pilih(id: string, speed: number, current: boolean) {
+    if (current) {
+      showToast('Paket ini sudah aktif');
+      return;
+    }
+    if (source !== 'api') {
+      showToast(`Permintaan upgrade ${speed} Mbps dikirim`);
+      return;
+    }
+    try {
+      await requestUpgrade({ paketId: id });
+      showToast(`Permintaan upgrade ${speed} Mbps dikirim`);
+      refresh();
+    } catch {
+      showToast('Pengajuan gagal. Coba lagi nanti.');
+    }
+  }
 
   return (
     <div
@@ -48,14 +69,14 @@ export function PackageScreen() {
               letterSpacing: '-.04em',
             }}
           >
-            {PLAN.speed}
+            {plan.speed}
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
-            {PLAN.unit}
+            {plan.unit}
           </div>
           <div style={{ flex: 1 }} />
           <div style={{ fontSize: 14, fontWeight: 800, color: '#FFD24A' }}>
-            {PLAN.price}
+            {plan.price}
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,.8)' }}>
               /bln
             </span>
@@ -89,15 +110,43 @@ export function PackageScreen() {
         </div>
       </div>
 
+      {pendingUpgrade && (
+        <div
+          style={{
+            background: 'var(--yels)',
+            border: '1px solid var(--yel)',
+            borderRadius: 18,
+            padding: 15,
+            boxShadow: 'var(--sh)',
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--warn)' }}>
+            Pengajuan upgrade sedang diproses
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--tx)',
+              lineHeight: 1.5,
+              marginTop: 6,
+            }}
+          >
+            Ke paket {pendingUpgrade.toSpeed} Mbps, diajukan{' '}
+            {pendingUpgrade.requestedOn}. Status: {pendingUpgrade.status}.
+          </div>
+        </div>
+      )}
+
       <SectionTitle>Bandingkan Paket</SectionTitle>
 
-      {PACKAGES.map((pk) => {
+      {packages.map((pk) => {
         const cur = !!pk.current;
         const pop = !!pk.popular;
         const border = cur ? 'var(--ok)' : pop ? 'var(--yel)' : 'var(--bd)';
         return (
           <div
-            key={pk.speed}
+            key={pk.id}
             style={{
               position: 'relative',
               background: 'var(--card)',
@@ -178,13 +227,7 @@ export function PackageScreen() {
             </div>
 
             <Tappable
-              onClick={() =>
-                showToast(
-                  cur
-                    ? 'Paket ini sudah aktif'
-                    : `Permintaan upgrade ${pk.speed} Mbps dikirim`,
-                )
-              }
+              onClick={() => void pilih(pk.id, pk.speed, cur)}
               style={{
                 flex: 'none',
                 width: 'auto',

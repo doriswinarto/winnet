@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Badge, Card, PulseDot } from '../components/primitives';
-import { TICKET_CHAT, TICKET_DETAIL } from '../data/tickets';
+import { usePortal } from '../api/PortalContext';
+import { TICKET_CHAT } from '../data/tickets';
 import { useApp } from '../state/AppContext';
 
 function Meta({ label, value }: { label: string; value: string }) {
@@ -13,7 +14,10 @@ function Meta({ label, value }: { label: string; value: string }) {
 }
 
 export function TicketDetailScreen() {
-  const { go, showToast } = useApp();
+  const { go, showToast, ticketId } = useApp();
+  const { snapshot } = usePortal();
+  const ticket =
+    snapshot.tickets.find((t) => t.id === ticketId) ?? snapshot.tickets[0];
   const [draft, setDraft] = useState('');
   const thread = useRef<HTMLDivElement>(null);
 
@@ -53,10 +57,10 @@ export function TicketDetailScreen() {
             className="mono"
             style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx2)' }}
           >
-            {TICKET_DETAIL.id}
+            {ticket?.id ?? '—'}
           </span>
           <span style={{ flex: 1 }} />
-          <Badge status={TICKET_DETAIL.status} />
+          {ticket && <Badge status={ticket.status} />}
         </div>
         <div
           style={{
@@ -66,7 +70,7 @@ export function TicketDetailScreen() {
             marginTop: 8,
           }}
         >
-          {TICKET_DETAIL.subject}
+          {ticket?.subject ?? 'Tiket tidak ditemukan'}
         </div>
         <div
           style={{
@@ -78,12 +82,14 @@ export function TicketDetailScreen() {
             color: 'var(--tx2)',
           }}
         >
-          <Meta label="Kategori" value={TICKET_DETAIL.cat} />
-          <Meta label="Dibuat" value={TICKET_DETAIL.created} />
-          <Meta label="Teknisi" value={TICKET_DETAIL.technician} />
+          <Meta label="Kategori" value={ticket?.cat ?? '—'} />
+          <Meta label="Dibuat" value={ticket?.date ?? '—'} />
+          <Meta label="Status" value={ticket?.status ?? '—'} />
         </div>
       </Card>
 
+      {/* The panel exposes ticket rows but no message thread and no reply
+          endpoint, so the conversation below is illustrative. */}
       <div
         ref={thread}
         className="scroll"

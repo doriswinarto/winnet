@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
 import { CanvasChrome } from './components/CanvasChrome';
@@ -15,6 +16,7 @@ import { StatusScreen } from './screens/StatusScreen';
 import { TicketDetailScreen } from './screens/TicketDetailScreen';
 import { TicketsScreen } from './screens/TicketsScreen';
 import { UsageScreen } from './screens/UsageScreen';
+import { usePortal } from './api/PortalContext';
 import { useApp } from './state/AppContext';
 import { CHROME_SCREENS, type ScreenId } from './types';
 
@@ -34,9 +36,29 @@ const SCREENS: Record<ScreenId, () => React.JSX.Element> = {
 };
 
 export default function App() {
-  const { screen, toast } = useApp();
-  const Screen = SCREENS[screen];
-  const chrome = CHROME_SCREENS.includes(screen);
+  const { screen, toast, go } = useApp();
+  const { authenticated, checkingSession } = usePortal();
+
+  // A restored "ingat saya" session skips the login screen on next open.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (authenticated && !restored.current) {
+      restored.current = true;
+      if (screen === 'login') go('home');
+    }
+    if (!authenticated) restored.current = false;
+  }, [authenticated, screen, go]);
+
+  // Signed out, the only reachable screens are the auth ones. This is a UX
+  // guard, not a security one: the node refuses data without a session
+  // cookie regardless of what the browser decides to render.
+  const gated =
+    !authenticated && !checkingSession && CHROME_SCREENS.includes(screen)
+      ? 'login'
+      : screen;
+
+  const Screen = SCREENS[gated];
+  const chrome = CHROME_SCREENS.includes(gated);
 
   return (
     <div className="canvas">
@@ -49,7 +71,7 @@ export default function App() {
             <AppHeader />
             {/* `key` restarts the rise-in transition on every screen change. */}
             <div
-              key={screen}
+              key={gated}
               className="scroll"
               style={{ flex: 1, padding: '0 20px 18px' }}
             >

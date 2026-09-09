@@ -4,11 +4,13 @@ import {
   SectionTitle,
   Tappable,
 } from '../components/primitives';
-import { CURRENT_INVOICE, PAYMENT_HISTORY } from '../data/billing';
+import { usePortal } from '../api/PortalContext';
 import { useApp } from '../state/AppContext';
 
 export function BillingScreen() {
   const { go, showToast } = useApp();
+  const { snapshot } = usePortal();
+  const { currentInvoice, payments } = snapshot;
 
   return (
     <div
@@ -41,7 +43,7 @@ export function BillingScreen() {
                 color: 'rgba(255,255,255,.82)',
               }}
             >
-              Tagihan Internet · {CURRENT_INVOICE.period}
+              Tagihan Internet · {currentInvoice?.period ?? '—'}
             </div>
             <div
               style={{
@@ -52,7 +54,7 @@ export function BillingScreen() {
                 marginTop: 4,
               }}
             >
-              {CURRENT_INVOICE.amount}
+              {currentInvoice?.amount ?? '—'}
             </div>
           </div>
           <div
@@ -67,7 +69,7 @@ export function BillingScreen() {
               whiteSpace: 'nowrap',
             }}
           >
-            {CURRENT_INVOICE.status}
+            {currentInvoice?.paid ? 'Lunas' : 'Belum Dibayar'}
           </div>
         </div>
 
@@ -87,13 +89,13 @@ export function BillingScreen() {
               className="mono"
               style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}
             >
-              {CURRENT_INVOICE.no}
+              {currentInvoice?.no ?? '—'}
             </div>
           </div>
           <div>
             <div style={{ opacity: 0.75 }}>Jatuh tempo</div>
             <div style={{ fontWeight: 800, color: '#FFD24A' }}>
-              {CURRENT_INVOICE.dueShort}
+              {currentInvoice?.dueShort ?? '—'}
             </div>
           </div>
         </div>
@@ -122,7 +124,7 @@ export function BillingScreen() {
         {['Unduh Invoice', 'Lihat Invoice'].map((label) => (
           <Tappable
             key={label}
-            onClick={() => showToast(`${label} · ${CURRENT_INVOICE.no}`)}
+            onClick={() => showToast(`${label} · ${currentInvoice?.no ?? '—'}`)}
             style={{
               flex: 1,
               padding: 13,
@@ -143,7 +145,7 @@ export function BillingScreen() {
 
       <SectionTitle style={{ marginTop: 2 }}>Riwayat Pembayaran</SectionTitle>
 
-      {PAYMENT_HISTORY.map((h) => (
+      {payments.map((h) => (
         <Card
           key={h.inv}
           radius={16}

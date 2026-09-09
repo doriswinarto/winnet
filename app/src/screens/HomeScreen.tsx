@@ -7,10 +7,8 @@ import {
   SectionTitle,
   Tappable,
 } from '../components/primitives';
-import { CURRENT_INVOICE } from '../data/billing';
-import { PLAN } from '../data/customer';
-import { HOME_NOTIFS } from '../data/notifications';
-import { UPTIME } from '../data/status';
+import { usePortal } from '../api/PortalContext';
+import { notificationFeed } from '../data/derive';
 import { useApp } from '../state/AppContext';
 import type { ScreenId } from '../types';
 
@@ -58,6 +56,10 @@ const QUICK_ACTIONS: {
 
 export function HomeScreen() {
   const { go } = useApp();
+  const { snapshot } = usePortal();
+  const { plan, currentInvoice, live, notices } = snapshot;
+  const feed = notificationFeed(notices, currentInvoice).slice(0, 2);
+  const online = live?.online ?? false;
 
   return (
     <div
@@ -79,7 +81,7 @@ export function HomeScreen() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <PulseDot color="#5BFFB0" />
+          <PulseDot color={online ? '#5BFFB0' : '#FF8A8A'} />
           <span
             style={{
               fontSize: 12,
@@ -88,7 +90,7 @@ export function HomeScreen() {
               letterSpacing: '.1em',
             }}
           >
-            ONLINE
+            {online ? 'ONLINE' : 'OFFLINE'}
           </span>
           <span style={{ flex: 1 }} />
           <span
@@ -99,7 +101,7 @@ export function HomeScreen() {
               color: 'rgba(255,255,255,.8)',
             }}
           >
-            uptime {UPTIME}
+            uptime {live?.uptime || '—'}
           </span>
         </div>
         <div
@@ -111,7 +113,9 @@ export function HomeScreen() {
             letterSpacing: '-.02em',
           }}
         >
-          Internet aktif dan berjalan baik
+          {online
+            ? 'Internet aktif dan berjalan baik'
+            : 'Koneksi sedang terputus'}
         </div>
         <FiberLine />
       </Tappable>
@@ -144,10 +148,10 @@ export function HomeScreen() {
               letterSpacing: '-.03em',
             }}
           >
-            {PLAN.speed} <span style={{ fontSize: 14 }}>{PLAN.unit}</span>
+            {plan.speed} <span style={{ fontSize: 14 }}>{plan.unit}</span>
           </div>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--blue)' }}>
-            {PLAN.price} / bulan
+            {plan.price} / bulan
           </div>
         </Card>
 
@@ -160,7 +164,7 @@ export function HomeScreen() {
             box={120}
             r={48}
             sw={13}
-            fraction={PLAN.usedFraction}
+            fraction={plan.usedFraction ?? 0}
             blur={6}
           />
           <div>
@@ -182,12 +186,12 @@ export function HomeScreen() {
                 letterSpacing: '-.02em',
               }}
             >
-              {PLAN.quotaUsed}
+              {plan.quotaUsed || '—'}
             </div>
             <div
               style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--tx2)' }}
             >
-              dari {PLAN.quotaTotal}
+              dari {plan.quotaTotal}
             </div>
           </div>
         </Card>
@@ -218,12 +222,12 @@ export function HomeScreen() {
               letterSpacing: '-.03em',
             }}
           >
-            {CURRENT_INVOICE.amount}
+            {currentInvoice?.amount ?? '—'}
           </div>
           <div
             style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--dang)' }}
           >
-            Jatuh tempo {CURRENT_INVOICE.due}
+            {currentInvoice ? `Jatuh tempo ${currentInvoice.due}` : 'Tidak ada tagihan'}
           </div>
         </div>
         <Tappable
@@ -391,9 +395,9 @@ export function HomeScreen() {
         </button>
       </div>
 
-      {HOME_NOTIFS.map((n) => (
+      {feed.map((n) => (
         <Card
-          key={n.title}
+          key={n.id}
           radius={15}
           pad={12}
           style={{ display: 'flex', gap: 11, alignItems: 'center' }}
@@ -405,7 +409,7 @@ export function HomeScreen() {
             fg={n.fg}
             dot={10}
             dotRadius="3px"
-            glow={n.sh}
+            glow={n.glow}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div

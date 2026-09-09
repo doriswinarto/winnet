@@ -182,6 +182,12 @@ a {
 .tapglow:active {
   transform: scale(0.97);
 }
+.tapglow:disabled {
+  cursor: not-allowed;
+}
+.tapglow:disabled:active {
+  transform: none;
+}
 
 /* Focus ring for keyboard users only — the design has no focus state of its
    own, so this adds one without changing the resting appearance. */

@@ -7,25 +7,11 @@ import {
   type ReactNode,
 } from 'react';
 import { AppContext, type AppContextValue } from './AppContext';
-import type {
-  PaymentMethodName,
-  ProfileTab,
-  ScreenId,
-  Theme,
-  UsagePeriod,
-} from '../types';
+import type { ProfileTab, ScreenId, Theme, UsagePeriod } from '../types';
 import type { TicketFilter } from '../data/tickets';
-import type { NotifFilter } from '../data/notifications';
 
 const THEME_KEY = 'winnet.theme';
 const TOAST_MS = 2600;
-
-/** The live speed meter re-reads every 1.4s, as in the design. */
-const SPEED_INTERVAL_MS = 1400;
-const SPEED_BASE = 45.4;
-const SPEED_SPREAD = 4.4;
-/** Reading shown before the meter has ticked, and on the static frames. */
-const SPEED_INITIAL = 48.2;
 
 function readStoredTheme(): Theme {
   try {
@@ -39,24 +25,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(readStoredTheme);
   const [screen, setScreen] = useState<ScreenId>('login');
   const [payStep, setPayStep] = useState(0);
-  const [method, setMethod] = useState<PaymentMethodName>('QRIS');
+  // Defaults to QRIS, the panel's usual first method; corrected once the
+  // real list arrives and the customer picks one.
+  const [method, setMethod] = useState<string>('qris');
   const [period, setPeriod] = useState<UsagePeriod>('Hari ini');
   const [tab, setTab] = useState<ProfileTab>('Data Pribadi');
   const [showPw, setShowPw] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [speed, setSpeed] = useState(SPEED_INITIAL);
   const [ticketFilter, setTicketFilter] = useState<TicketFilter>('Semua');
-  const [notifFilter, setNotifFilter] = useState<NotifFilter>('Semua');
+  const [notifFilter, setNotifFilter] = useState<string>('Semua');
+  const [ticketId, setTicketId] = useState<string | null>(null);
 
   const toastTimer = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    const id = window.setInterval(
-      () => setSpeed(SPEED_BASE + Math.random() * SPEED_SPREAD),
-      SPEED_INTERVAL_MS,
-    );
-    return () => window.clearInterval(id);
-  }, []);
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
@@ -85,6 +65,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToast(null);
   }, []);
 
+  const openTicket = useCallback(
+    (id: string) => {
+      setTicketId(id);
+      go('ticket');
+    },
+    [go],
+  );
+
   const value = useMemo<AppContextValue>(
     () => ({
       theme,
@@ -95,10 +83,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       tab,
       showPw,
       toast,
-      speed,
       ticketFilter,
       notifFilter,
+      ticketId,
       go,
+      openTicket,
       setTheme,
       toggleTheme: () => setTheme((t) => (t === 'neon' ? 'lite' : 'neon')),
       payNext: () => setPayStep((s) => Math.min(s + 1, 2)),
@@ -120,10 +109,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       tab,
       showPw,
       toast,
-      speed,
       ticketFilter,
       notifFilter,
+      ticketId,
       go,
+      openTicket,
       showToast,
     ],
   );

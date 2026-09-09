@@ -1,19 +1,20 @@
 import { Chip, IconTile } from '../components/primitives';
-import {
-  NOTIFICATIONS,
-  NOTIF_FILTERS,
-  NOTIF_FILTER_CATS,
-} from '../data/notifications';
+import { usePortal } from '../api/PortalContext';
+import { notificationFeed } from '../data/derive';
 import { useApp } from '../state/AppContext';
 
 export function NotificationsScreen() {
   const { notifFilter, setNotifFilter } = useApp();
+  const { snapshot } = usePortal();
+  const feed = notificationFeed(snapshot.notices, snapshot.currentInvoice);
+  // Filters are built from what the feed actually contains, rather than a
+  // fixed list: the panel has no notifications section, so the categories
+  // present depend on which notices are live.
+  const cats = [...new Set(feed.map((n) => n.cat))];
+  const filters = ['Semua', ...cats];
+  const active = filters.includes(notifFilter) ? notifFilter : 'Semua';
   const visible =
-    notifFilter === 'Semua'
-      ? NOTIFICATIONS
-      : NOTIFICATIONS.filter((n) =>
-          NOTIF_FILTER_CATS[notifFilter].includes(n.cat),
-        );
+    active === 'Semua' ? feed : feed.filter((n) => n.cat === active);
 
   return (
     <div
@@ -21,11 +22,11 @@ export function NotificationsScreen() {
       style={{ display: 'flex', flexDirection: 'column', gap: 13 }}
     >
       <div className="scroll" style={{ display: 'flex', gap: 7 }}>
-        {NOTIF_FILTERS.map((f) => (
+        {filters.map((f) => (
           <Chip
             key={f}
             label={f}
-            active={f === notifFilter}
+            active={f === active}
             onClick={() => setNotifFilter(f)}
           />
         ))}
@@ -33,7 +34,7 @@ export function NotificationsScreen() {
 
       {visible.map((n) => (
         <div
-          key={n.title}
+          key={n.id}
           style={{
             background: n.unread ? 'var(--card)' : 'var(--card2)',
             border: '1px solid var(--bd)',

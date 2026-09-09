@@ -1,17 +1,24 @@
 import { Card, ProgressRing, StatLabel } from '../components/primitives';
-import { PLAN } from '../data/customer';
+import { usePortal } from '../api/PortalContext';
 import {
-  BREAKDOWN,
-  DAILY_BARS,
-  PEAK_DAY,
-  PERIODS,
-  USAGE_STATS,
-} from '../data/usage';
+  peakMonth,
+  usageBreakdown,
+  usageStats,
+} from '../data/derive';
+import { PERIODS } from '../data/usage';
 import { useApp } from '../state/AppContext';
 
 export function UsageScreen() {
   const { period, setPeriod } = useApp();
-  const percent = Math.round(PLAN.usedFraction * 100);
+  const { snapshot } = usePortal();
+  const { plan, usage } = snapshot;
+  const percent = Math.round((plan.usedFraction ?? 0) * 100);
+  const breakdown = usageBreakdown(usage);
+  const stats = usageStats(usage, plan);
+  const peak = peakMonth(usage);
+  const maxTotal = Math.max(1, ...usage.map((u) => u.totalGb));
+  // "12.5 GB" is drawn as a large figure with a small unit, as in the design.
+  const used = (plan.quotaUsed || '— ').split(' ');
 
   return (
     <div
@@ -64,7 +71,7 @@ export function UsageScreen() {
             box={200}
             r={82}
             sw={18}
-            fraction={PLAN.usedFraction}
+            fraction={plan.usedFraction ?? 0}
             blur={10}
           />
           <div
@@ -85,12 +92,12 @@ export function UsageScreen() {
                 letterSpacing: '-.04em',
               }}
             >
-              12.5 <span style={{ fontSize: 17 }}>GB</span>
+              {used[0]} <span style={{ fontSize: 17 }}>{used[1]}</span>
             </div>
             <div
               style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--tx2)' }}
             >
-              dari {PLAN.quotaTotal}
+              dari {plan.quotaTotal}
             </div>
             <div
               style={{
@@ -117,7 +124,7 @@ export function UsageScreen() {
             marginTop: 16,
           }}
         >
-          {BREAKDOWN.map((b) => (
+          {breakdown.map((b) => (
             <div
               key={b.label}
               style={{
@@ -157,7 +164,7 @@ export function UsageScreen() {
           <div
             style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--tx)' }}
           >
-            Pemakaian Harian
+            Pemakaian Bulanan
           </div>
           <div
             style={{
@@ -203,11 +210,11 @@ export function UsageScreen() {
             height: 132,
           }}
         >
-          {DAILY_BARS.map((bar) => {
-            const peak = bar.d === PEAK_DAY;
+          {usage.map((bar) => {
+            const isPeak = bar.month === peak;
             return (
               <div
-                key={bar.d}
+                key={bar.month}
                 style={{
                   flex: 1,
                   display: 'flex',
@@ -230,18 +237,18 @@ export function UsageScreen() {
                 >
                   <div
                     style={{
-                      height: `${bar.up}%`,
+                      height: `${(bar.upGb / maxTotal) * 100}%`,
                       borderRadius: 5,
                       background: 'var(--yel)',
-                      boxShadow: peak ? 'var(--glowY)' : 'none',
+                      boxShadow: isPeak ? 'var(--glowY)' : 'none',
                     }}
                   />
                   <div
                     style={{
-                      height: `${bar.down}%`,
+                      height: `${(bar.downGb / maxTotal) * 100}%`,
                       borderRadius: 5,
                       background: 'var(--blue)',
-                      boxShadow: peak ? 'var(--glowB)' : 'none',
+                      boxShadow: isPeak ? 'var(--glowB)' : 'none',
                     }}
                   />
                 </div>
@@ -249,10 +256,10 @@ export function UsageScreen() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: peak ? 'var(--blue)' : 'var(--tx2)',
+                    color: isPeak ? 'var(--blue)' : 'var(--tx2)',
                   }}
                 >
-                  {bar.d}
+                  {bar.label}
                 </div>
               </div>
             );
@@ -268,7 +275,7 @@ export function UsageScreen() {
           gap: 11,
         }}
       >
-        {USAGE_STATS.map((s) => (
+        {stats.map((s) => (
           <Card key={s.label} radius={16} pad={13}>
             <StatLabel>{s.label}</StatLabel>
             <div

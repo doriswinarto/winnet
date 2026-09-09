@@ -1,13 +1,40 @@
 import { Badge, Card, Chip, Tappable } from '../components/primitives';
-import { TICKETS, TICKET_FILTERS } from '../data/tickets';
+import { reportFault } from '../api/bff';
+import { usePortal } from '../api/PortalContext';
+import { TICKET_FILTERS } from '../data/tickets';
 import { useApp } from '../state/AppContext';
 
 export function TicketsScreen() {
-  const { go, showToast, ticketFilter, setTicketFilter } = useApp();
+  const { openTicket, showToast, ticketFilter, setTicketFilter } = useApp();
+  const { snapshot, source, refresh } = usePortal();
+  const { tickets, notices } = snapshot;
   const visible =
     ticketFilter === 'Semua'
-      ? TICKETS
-      : TICKETS.filter((t) => t.status === ticketFilter);
+      ? tickets
+      : tickets.filter((t) => t.status === ticketFilter);
+
+  // `/tulis/lapor` needs a category and a description. The design's button
+  // opens no form, so the active network notice supplies both when there is
+  // one — which is the case this button exists for.
+  async function buatTiket() {
+    if (source !== 'api') {
+      showToast('Tiket baru dibuat');
+      return;
+    }
+    const outage = notices.find((n) => n.severity === 'outage');
+    try {
+      await reportFault({
+        kategori: outage ? 'Internet Gangguan' : 'Lainnya',
+        keterangan: outage
+          ? `Terdampak gangguan di ${outage.area ?? 'jaringan'}: ${outage.title}`
+          : 'Pelanggan melaporkan kendala layanan dari aplikasi.',
+      });
+      showToast('Tiket baru dibuat');
+      refresh();
+    } catch {
+      showToast('Gagal membuat tiket. Coba lagi nanti.');
+    }
+  }
 
   return (
     <div
@@ -15,7 +42,7 @@ export function TicketsScreen() {
       style={{ display: 'flex', flexDirection: 'column', gap: 13 }}
     >
       <Tappable
-        onClick={() => showToast('Tiket baru TKT-2026-0918 dibuat')}
+        onClick={() => void buatTiket()}
         style={{
           height: 52,
           borderRadius: 15,
@@ -48,7 +75,7 @@ export function TicketsScreen() {
       {visible.map((t) => (
         <Tappable
           key={t.id}
-          onClick={() => go('ticket')}
+          onClick={() => openTicket(t.id)}
           style={{
             background: 'var(--card)',
             border: '1px solid var(--bd)',

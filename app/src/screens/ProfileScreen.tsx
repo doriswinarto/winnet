@@ -1,11 +1,20 @@
 import { Card, Tappable } from '../components/primitives';
-import { CUSTOMER, PROFILE_ROWS, PROFILE_TABS } from '../data/customer';
+import { usePortal } from '../api/PortalContext';
+import { PROFILE_TABS } from '../data/customer';
+import { profileRows } from '../data/derive';
 import { useApp } from '../state/AppContext';
 
 export function ProfileScreen() {
   const { tab, setTab, theme, toggleTheme, go, showToast } = useApp();
+  const { snapshot, settings, signOut } = usePortal();
+  const { customer, live } = snapshot;
   const neon = theme === 'neon';
-  const rows = PROFILE_ROWS[tab];
+  const rows = profileRows(customer, live)[tab];
+
+  async function keluar() {
+    await signOut();
+    go('login');
+  }
 
   return (
     <div
@@ -33,7 +42,7 @@ export function ProfileScreen() {
             boxShadow: 'var(--glowY)',
           }}
         >
-          {CUSTOMER.initials}
+          {customer.initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -44,18 +53,18 @@ export function ProfileScreen() {
               letterSpacing: '-.02em',
             }}
           >
-            {CUSTOMER.name}
+            {customer.name}
           </div>
           <div
             className="mono"
             style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--blue)' }}
           >
-            {CUSTOMER.id}
+            {customer.id}
           </div>
           <div
             style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--tx2)' }}
           >
-            {CUSTOMER.email}
+            {customer.email}
           </div>
         </div>
       </Card>
@@ -232,8 +241,16 @@ export function ProfileScreen() {
         >
           Edit Profil
         </Tappable>
+        {/* The panel authenticates by WhatsApp OTP — there is no password to
+            change — so this slot offers support contact instead. */}
         <Tappable
-          onClick={() => showToast('Tautan ubah password dikirim ke email')}
+          onClick={() =>
+            showToast(
+              settings.supportPhone
+                ? `Hubungi CS di ${settings.supportPhone}`
+                : 'Hubungi CS melalui WhatsApp resmi WinNet',
+            )
+          }
           style={{
             flex: 1,
             height: 50,
@@ -248,12 +265,12 @@ export function ProfileScreen() {
             justifyContent: 'center',
           }}
         >
-          Ubah Password
+          Hubungi CS
         </Tappable>
       </div>
 
       <Tappable
-        onClick={() => go('login')}
+        onClick={() => void keluar()}
         style={{
           height: 48,
           borderRadius: 15,

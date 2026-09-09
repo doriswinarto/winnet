@@ -6,11 +6,22 @@ import {
   StatLabel,
   Tappable,
 } from '../components/primitives';
-import { NETWORK_CHAIN, OUTAGE, statusMetrics } from '../data/status';
+import { usePortal } from '../api/PortalContext';
+import {
+  activeOutage,
+  networkChain,
+  statusMetrics,
+} from '../data/derive';
 import { useApp } from '../state/AppContext';
 
 export function StatusScreen() {
-  const { speed, go } = useApp();
+  const { go } = useApp();
+  const { snapshot } = usePortal();
+  const { live, customer, notices } = snapshot;
+  const speed = live?.speedMbps ?? 0;
+  const online = live?.online ?? false;
+  const chain = networkChain(customer);
+  const outage = activeOutage(notices);
 
   return (
     <div
@@ -51,7 +62,7 @@ export function StatusScreen() {
             border: '1px solid rgba(91,255,176,.45)',
           }}
         >
-          <PulseDot color="#5BFFB0" size={10} />
+          <PulseDot color={online ? '#5BFFB0' : '#FF8A8A'} size={10} />
           <span
             style={{
               fontSize: 15,
@@ -60,7 +71,7 @@ export function StatusScreen() {
               letterSpacing: '.06em',
             }}
           >
-            ONLINE
+            {online ? 'ONLINE' : 'OFFLINE'}
           </span>
         </div>
         <div
@@ -71,7 +82,9 @@ export function StatusScreen() {
             marginTop: 9,
           }}
         >
-          Internet Anda berjalan normal
+          {online
+            ? 'Internet Anda berjalan normal'
+            : 'Koneksi Anda sedang terputus'}
         </div>
         <div
           style={{
@@ -109,7 +122,7 @@ export function StatusScreen() {
           gap: 11,
         }}
       >
-        {statusMetrics(speed).map((m) => (
+        {statusMetrics(live).map((m) => (
           <Card key={m.label} radius={16} pad={13}>
             <StatLabel>{m.label}</StatLabel>
             <div
@@ -139,7 +152,7 @@ export function StatusScreen() {
         >
           Jalur Jaringan
         </div>
-        {NETWORK_CHAIN.map((hop, i) => (
+        {chain.map((hop, i) => (
           <div key={hop.name}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <PulseDot
@@ -177,12 +190,13 @@ export function StatusScreen() {
                 Normal
               </span>
             </div>
-            {i < NETWORK_CHAIN.length - 1 && <FiberDrop />}
+            {i < chain.length - 1 && <FiberDrop />}
           </div>
         ))}
       </Card>
 
-      {/* outage notice */}
+      {/* outage notice — only when the panel is reporting one */}
+      {outage && (
       <div
         style={{
           background: 'var(--dangs)',
@@ -195,7 +209,7 @@ export function StatusScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <PulseDot color="var(--dang)" size={9} speed={1.3} />
           <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--dang)' }}>
-            {OUTAGE.title}
+            {outage.title}
           </div>
         </div>
         <div
@@ -207,8 +221,13 @@ export function StatusScreen() {
             marginTop: 7,
           }}
         >
-          Tim teknis kami sedang melakukan perbaikan di area {OUTAGE.area}.
-          Estimasi normal kembali <b>{OUTAGE.eta}</b>.
+          {outage.body}
+          {outage.eta && (
+            <>
+              {' '}
+              Estimasi normal kembali <b>{outage.eta}</b>.
+            </>
+          )}
         </div>
         <Tappable
           onClick={() => go('tickets')}
@@ -228,6 +247,7 @@ export function StatusScreen() {
           Buat Tiket Gangguan
         </Tappable>
       </div>
+      )}
     </div>
   );
 }
