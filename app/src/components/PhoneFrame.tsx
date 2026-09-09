@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isNative } from '../api/platform';
 
 function StatusBar() {
   return (
@@ -42,13 +43,22 @@ function StatusBar() {
   );
 }
 
-/** Device bezel, notch and status bar. Collapses to fullscreen on mobile. */
+/**
+ * Device bezel, notch and status bar. Collapses to fullscreen on mobile.
+ *
+ * On Android the drawn status bar and notch are dropped entirely — the handset
+ * has real ones, and two would sit on top of each other. The space they
+ * occupied becomes the system's safe-area inset instead, so the header clears
+ * the real status bar and the nav bar clears the gesture area.
+ */
 export function PhoneFrame({ children }: { children: ReactNode }) {
+  const native = isNative();
+
   return (
     <div className="bezel">
       <div className="screen">
-        <StatusBar />
-        <div className="notch" />
+        {native ? <div className="safe-top" /> : <StatusBar />}
+        {!native && <div className="notch" />}
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           {children}
         </div>

@@ -74,6 +74,7 @@ export function BottomNav() {
 
   return (
     <nav
+      className="app-nav"
       style={{
         flex: 'none',
         display: 'flex',

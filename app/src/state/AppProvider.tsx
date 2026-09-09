@@ -35,6 +35,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ticketFilter, setTicketFilter] = useState<TicketFilter>('Semua');
   const [notifFilter, setNotifFilter] = useState<string>('Semua');
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const [history, setHistory] = useState<ScreenId[]>([]);
 
   const toastTimer = useRef<number | undefined>(undefined);
 
@@ -60,10 +61,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const go = useCallback((next: ScreenId) => {
     window.clearTimeout(toastTimer.current);
+    setScreen((current) => {
+      if (current !== next) setHistory((h) => [...h, current]);
+      return next;
+    });
+    setPayStep(0);
+    setToast(null);
+  }, []);
+
+  const resetTo = useCallback((next: ScreenId) => {
+    window.clearTimeout(toastTimer.current);
+    setHistory([]);
     setScreen(next);
     setPayStep(0);
     setToast(null);
   }, []);
+
+  /**
+   * Back semantics for the Android hardware button. Within the payment flow
+   * it rewinds a step rather than leaving the screen, which is what a
+   * customer part-way through paying expects. Signing out clears the stack so
+   * back from Login cannot walk into a signed-in screen.
+   */
+  const back = useCallback((): boolean => {
+    if (screen === 'payment' && payStep > 0) {
+      setPayStep(0);
+      return true;
+    }
+    if (history.length === 0) return false;
+
+    const previous = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    window.clearTimeout(toastTimer.current);
+    setScreen(previous);
+    setPayStep(0);
+    setToast(null);
+    return true;
+  }, [screen, payStep, history]);
 
   const openTicket = useCallback(
     (id: string) => {
@@ -86,8 +120,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ticketFilter,
       notifFilter,
       ticketId,
+      history,
       go,
       openTicket,
+      back,
+      resetTo,
       setTheme,
       toggleTheme: () => setTheme((t) => (t === 'neon' ? 'lite' : 'neon')),
       payNext: () => setPayStep((s) => Math.min(s + 1, 2)),
@@ -112,8 +149,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ticketFilter,
       notifFilter,
       ticketId,
+      history,
       go,
       openTicket,
+      back,
+      resetTo,
       showToast,
     ],
   );

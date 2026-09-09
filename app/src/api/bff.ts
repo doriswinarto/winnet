@@ -10,6 +10,7 @@ import type {
   SpeedtestRequest,
   UpgradeRequest,
 } from '@shared/portal';
+import { isNative, platform } from './platform';
 
 /**
  * Client for the portal node.
@@ -20,7 +21,31 @@ import type {
  * own, which is why nothing below handles a token.
  */
 
-const BASE = '/bff';
+/**
+ * Where the portal node lives.
+ *
+ * In a browser the app is served by the node itself, so a relative path keeps
+ * everything same-origin. In the Android build the WebView serves the bundle
+ * from `https://localhost`, where `/bff` would resolve inside the APK — so the
+ * native build needs the node's absolute public origin.
+ *
+ * `VITE_PORTAL_ORIGIN` is a public URL, not a secret. The panel API key is
+ * still server-side only and must never appear in this package.
+ */
+const NATIVE_ORIGIN = (import.meta.env.VITE_PORTAL_ORIGIN ?? '').replace(
+  /\/+$/,
+  '',
+);
+
+const BASE = isNative() ? `${NATIVE_ORIGIN}/bff` : '/bff';
+
+if (isNative() && !NATIVE_ORIGIN) {
+  // Fail loudly at boot rather than with a confusing 404 on first request.
+  throw new Error(
+    'VITE_PORTAL_ORIGIN must be set for the native build — it is the public ' +
+      'https origin of the portal node.',
+  );
+}
 
 export class BffError extends Error {
   readonly status: number;
@@ -48,10 +73,21 @@ async function request<T>(
   try {
     res = await fetch(BASE + path, {
       method: init?.method ?? 'POST',
-      // Same origin in production; the dev server proxies /bff so the cookie
-      // is first-party either way.
-      credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      // Browser: same-origin (the node serves the bundle, and the dev server
+      // proxies /bff), so the cookie is first-party. Native: CapacitorHttp
+      // sends this through Android's HTTP stack and its cookie jar, which
+      // needs 'include' since the origin differs from the WebView's.
+      credentials: isNative() ? 'include' : 'same-origin',
+      headers: {
+        ...(body === undefined
+          ? {}
+          : { 'Content-Type': 'application/json' }),
+        // Tells the node this is the app, not a browser tab, so it issues a
+        // cookie Android's CookieManager will send back. A web page cannot
+        // forge this: a custom header cross-origin needs a CORS preflight,
+        // and the node grants no CORS.
+        ...(isNative() ? { 'X-WinNet-Client': platform() } : {}),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: init?.signal,
     });

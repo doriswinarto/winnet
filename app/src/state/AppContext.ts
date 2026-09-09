@@ -18,11 +18,20 @@ export interface AppState {
   notifFilter: string;
   /** Which ticket the detail screen is showing. */
   ticketId: string | null;
+  /** Screens visited, oldest first, for the Android back button. */
+  history: ScreenId[];
 }
 
 export interface AppActions {
   go: (screen: ScreenId) => void;
   openTicket: (id: string) => void;
+  /**
+   * Steps back one screen. Returns false when there is nowhere to go, which
+   * is what tells the Android listener to let the system close the app.
+   */
+  back: () => boolean;
+  /** Navigates and clears history, so back cannot return to the old screen. */
+  resetTo: (screen: ScreenId) => void;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   payNext: () => void;

@@ -251,6 +251,18 @@ button:focus-visible {
   flex-direction: column;
 }
 
+/* Android: stands in for the drawn status bar, sized by the real one. The
+   minimum keeps the header off the top edge on devices reporting no inset. */
+.safe-top {
+  flex: none;
+  height: max(env(safe-area-inset-top), 8px);
+}
+
+/* Android: the bottom nav must clear the gesture bar. */
+.native .app-nav {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
 .notch {
   position: absolute;
   top: 10px;
@@ -287,6 +299,29 @@ button:focus-visible {
 .composer-input::placeholder {
   color: var(--tx2);
   font-weight: 600;
+}
+
+/* The rules below also apply unconditionally on Android, where the bezel and
+   the desktop chrome make no sense at any screen size. */
+.native .canvas {
+  padding: 0;
+  gap: 0;
+  height: 100%;
+}
+.native .canvas-chrome {
+  display: none;
+}
+.native .bezel {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.native .screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
 }
 
 @media (max-width: 460px), (max-height: 900px) and (pointer: coarse) {

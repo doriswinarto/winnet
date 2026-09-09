@@ -16,7 +16,10 @@ import { StatusScreen } from './screens/StatusScreen';
 import { TicketDetailScreen } from './screens/TicketDetailScreen';
 import { TicketsScreen } from './screens/TicketsScreen';
 import { UsageScreen } from './screens/UsageScreen';
+import { App as CapApp } from '@capacitor/app';
 import { usePortal } from './api/PortalContext';
+import { applyNativeTheme, hideSplash, markNativePlatform } from './api/native';
+import { isNative } from './api/platform';
 import { useApp } from './state/AppContext';
 import { CHROME_SCREENS, type ScreenId } from './types';
 
@@ -36,8 +39,31 @@ const SCREENS: Record<ScreenId, () => React.JSX.Element> = {
 };
 
 export default function App() {
-  const { screen, toast, go } = useApp();
+  const { screen, toast, go, back, theme } = useApp();
   const { authenticated, checkingSession } = usePortal();
+
+  useEffect(() => {
+    markNativePlatform();
+    void hideSplash();
+  }, []);
+
+  // The system status bar sits above the app, so it has to follow Mode Neon.
+  useEffect(() => {
+    void applyNativeTheme(theme);
+  }, [theme]);
+
+  // Navigation is state rather than routes, so without this the hardware back
+  // button would close the app from any screen. `back()` reports whether it
+  // had somewhere to go; only when it does not do we let Android exit.
+  useEffect(() => {
+    if (!isNative()) return;
+    const handle = CapApp.addListener('backButton', () => {
+      if (!back()) void CapApp.exitApp();
+    });
+    return () => {
+      void handle.then((h) => h.remove());
+    };
+  }, [back]);
 
   // A restored "ingat saya" session skips the login screen on next open.
   const restored = useRef(false);

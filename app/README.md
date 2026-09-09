@@ -19,6 +19,12 @@ Data comes from the WinNet panel through the portal node in `../server`, which
 holds the IP-locked API key — see its README. Start that too (`:8787`) for
 live data; without it the app falls back to the design's content and says so.
 
+## Android
+
+The same code ships as an APK via Capacitor — see `ANDROID.md`. This is only
+possible because the app talks to the portal node rather than the panel: a
+phone's IP can never be on the panel's allowlist, but the node's is.
+
 ## Live data
 
 The browser never sees the panel. `../server` fetches, validates and
@@ -51,12 +57,13 @@ theme is then switched from **Profil → Mode Neon**, as in the design.
 
 ```
 src/
-  styles/theme.css     .lite / .neon token sets, keyframes, frame chrome
-  styles/fonts.css     self-hosted Plus Jakarta Sans + JetBrains Mono
-  state/AppContext.tsx one store: theme, screen, payment step, filters, toast
-  data/                all customer/billing/usage/ticket/notification content
-  components/          phone frame, header, bottom nav, toast, primitives
-  screens/             one component per screen
+  styles/theme.css      .lite / .neon token sets, keyframes, frame chrome
+  styles/fonts.css      self-hosted Plus Jakarta Sans + JetBrains Mono
+  state/                one store: theme, screen, payment step, filters, toast
+  api/                  portal-node client, data provider, native wiring
+  data/                 mock snapshot plus everything derived from live data
+  components/           phone frame, header, bottom nav, toast, primitives
+  screens/              one component per screen
 ```
 
 `theme.css` holds every colour and shadow from the design verbatim. Both themes
@@ -66,16 +73,16 @@ the design itself does (the nav's active glow).
 `--gk` scales the alpha of every glow shadow. It is the `glow` strength control
 from the design's props panel; `1` is the design as drawn, `0` removes the glow.
 
-## Data
+## Mock data
 
-All content is static mock data under `src/data/` — the Indonesian copy,
-Rupiah amounts, ODP/OLT/ONT references and customer record (Budi Santoso,
-WN-1180-4472) from the design. There is no backend; wiring one up means
-replacing those modules, which is why they are kept apart from the screens.
+`src/data/mock.ts` holds the design's content — the Indonesian copy, Rupiah
+amounts, ODP/OLT/ONT references and the Budi Santoso record — in the same view
+model shapes the node returns. It is what renders before sign-in and whenever
+the node is unreachable, so the screens have one code path either way.
 
-The one live value is the speed meter, which re-reads every 1.4s within the
-design's 45.4–49.8 Mbps band and drives both the Service Status gauge and its
-KECEPATAN metric.
+`src/data/derive.ts` computes what the panel does not return directly: profile
+tabs, usage breakdown and stats, status metrics, the network chain and the
+notification feed.
 
 ## Where this departs from the prototype
 
@@ -106,6 +113,9 @@ a few things had to be decided rather than copied:
 - **Ticket detail** opens scrolled to the newest message, so the technician's
   reply and the typing indicator are visible without scrolling.
 - **Fonts are self-hosted** rather than pulled from the Google Fonts CDN.
+- Accessibility work the prototype had no need for: every tappable is a real
+  button, the toast is a live region, tabs and chips carry pressed state, and
+  `prefers-reduced-motion` stops the looping animations.
 
 ## Where the design outran the API
 
@@ -131,6 +141,3 @@ not a test the customer runs.
 *Buat Tiket Baru* posts to `/tulis/lapor` using the active network notice for
 its category and description, since the design's button opens no form. A form
 is the obvious next step.
-- Accessibility work the prototype had no need for: every tappable is a real
-  button, the toast is a live region, tabs and chips carry pressed state, and
-  `prefers-reduced-motion` stops the looping animations.

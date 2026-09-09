@@ -123,7 +123,7 @@ authRouter.post('/otp/periksa', async (req, res) => {
       return;
     }
 
-    setSessionToken(res, token);
+    setSessionToken(req, res, token);
 
     if (ingatSaya) {
       // Best effort: failing to issue a remember token must not fail the login
@@ -131,7 +131,7 @@ authRouter.post('/otp/periksa', async (req, res) => {
       try {
         const remembered = await callPanel(PANEL_PATHS.ingatTerbitkan, { token });
         const rt = tokenFrom(remembered, REMEMBER_TOKEN_KEYS);
-        if (rt) setRememberToken(res, rt);
+        if (rt) setRememberToken(req, res, rt);
       } catch (err) {
         console.error('[panel] ingat/terbitkan failed', err);
       }
@@ -171,10 +171,10 @@ authRouter.post('/sesi/pulihkan', async (req, res) => {
       res.json({ authenticated: false } satisfies SessionState);
       return;
     }
-    setSessionToken(res, token);
+    setSessionToken(req, res, token);
     // A panel that rotates the remember token on use hands back a new one.
     const rotated = tokenFrom(payload, REMEMBER_TOKEN_KEYS);
-    if (rotated && rotated !== token) setRememberToken(res, rotated);
+    if (rotated && rotated !== token) setRememberToken(req, res, rotated);
 
     res.json({ authenticated: true, restored: true } satisfies SessionState);
   } catch (err) {

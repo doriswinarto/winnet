@@ -5,7 +5,7 @@ import { profileRows } from '../data/derive';
 import { useApp } from '../state/AppContext';
 
 export function ProfileScreen() {
-  const { tab, setTab, theme, toggleTheme, go, showToast } = useApp();
+  const { tab, setTab, theme, toggleTheme, resetTo, showToast } = useApp();
   const { snapshot, settings, signOut } = usePortal();
   const { customer, live } = snapshot;
   const neon = theme === 'neon';
@@ -13,7 +13,9 @@ export function ProfileScreen() {
 
   async function keluar() {
     await signOut();
-    go('login');
+    // Reset rather than push: back from Login must not return to a screen
+    // that now has no session behind it.
+    resetTo('login');
   }
 
   return (
