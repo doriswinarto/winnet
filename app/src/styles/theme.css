@@ -1,0 +1,351 @@
+@import './fonts.css';
+
+/* ==========================================================================
+   WinNet ISP — design tokens
+   Ported verbatim from the Claude Design source (`WinNet Mobile App.dc.html`).
+   Every colour, shadow and radius below matches the prototype exactly.
+
+   `--gk` is a glow-strength multiplier (the `glow` prop exposed in the design
+   panel). It scales the alpha of every glow shadow; 1 reproduces the design
+   as-drawn, 0 removes the glow entirely.
+   ========================================================================== */
+
+:root {
+  --gk: 1;
+}
+
+.lite {
+  --bg: #f5f8fc;
+  --card: #ffffff;
+  --card2: #f5f8fc;
+  --bd: #e4eaf2;
+  --tx: #172033;
+  --tx2: #64748b;
+  --blue: #0b5ed7;
+  --blued: #063b8c;
+  --blues: #eaf1fd;
+  --yel: #ffc107;
+  --yels: #fff7e0;
+  --ok: #16a34a;
+  --oks: #e9f8ee;
+  --warn: #f59e0b;
+  --dang: #dc2626;
+  --dangs: #fdecec;
+  --sh: 0 2px 10px rgba(23, 32, 51, 0.07);
+  --glowB: 0 6px 18px rgba(11, 94, 215, calc(0.32 * var(--gk)));
+  --glowY: 0 6px 18px rgba(255, 193, 7, calc(0.34 * var(--gk)));
+  --glowG: 0 6px 18px rgba(22, 163, 74, calc(0.28 * var(--gk)));
+  --ring: #e4eaf2;
+  --bezel: #1b2130;
+  --canvas: #e9edf3;
+  --navsh: 0 -6px 20px rgba(6, 20, 50, 0.06);
+  --dangGlow: 0 0 20px rgba(220, 38, 38, calc(0.5 * var(--gk)));
+}
+
+.neon {
+  --bg: #05070f;
+  --card: #0b1122;
+  --card2: #0e1730;
+  --bd: rgba(84, 150, 255, 0.24);
+  --tx: #eaf1ff;
+  --tx2: #8fa3c8;
+  --blue: #4d9bff;
+  --blued: #1b5fd9;
+  --blues: rgba(77, 155, 255, 0.14);
+  --yel: #ffd24a;
+  --yels: rgba(255, 210, 74, 0.14);
+  --ok: #38e08a;
+  --oks: rgba(56, 224, 138, 0.14);
+  --warn: #ffb020;
+  --dang: #ff5a5a;
+  --dangs: rgba(255, 90, 90, 0.14);
+  --sh: 0 0 0 1px rgba(84, 150, 255, 0.1),
+    0 0 26px rgba(20, 80, 200, calc(0.3 * var(--gk)));
+  --glowB: 0 0 22px rgba(77, 155, 255, calc(0.75 * var(--gk))),
+    0 0 54px rgba(77, 155, 255, calc(0.35 * var(--gk)));
+  --glowY: 0 0 22px rgba(255, 210, 74, calc(0.7 * var(--gk))),
+    0 0 52px rgba(255, 210, 74, calc(0.3 * var(--gk)));
+  --glowG: 0 0 22px rgba(56, 224, 138, calc(0.7 * var(--gk))),
+    0 0 50px rgba(56, 224, 138, calc(0.32 * var(--gk)));
+  --ring: rgba(84, 150, 255, 0.18);
+  --bezel: #0a0f1c;
+  --canvas: #05070f;
+  --navsh: 0 -6px 20px rgba(6, 20, 50, 0.06);
+  --dangGlow: 0 0 20px rgba(220, 38, 38, calc(0.5 * var(--gk)));
+}
+
+/* ========================= base ========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--tx);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+/* ========================= animation ========================= */
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 7px transparent;
+    opacity: 0.72;
+  }
+}
+@keyframes flow {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes glowBreathe {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.22);
+  }
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.rise {
+  animation: rise 0.3s ease;
+}
+
+.tapglow {
+  transition: transform 0.14s ease, box-shadow 0.2s ease;
+}
+.tapglow:active {
+  transform: scale(0.97);
+}
+.tapglow:disabled {
+  cursor: not-allowed;
+}
+.tapglow:disabled:active {
+  transform: none;
+}
+
+/* Focus ring for keyboard users only — the design has no focus state of its
+   own, so this adds one without changing the resting appearance. */
+.tapglow:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================= app frame ========================= */
+
+.canvas {
+  min-height: 100%;
+  background: var(--canvas);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 20px 44px;
+}
+
+.canvas-chrome {
+  width: 414px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+/* The bezel + notch presentation only makes sense on a desktop-sized
+   viewport. On a real phone the app fills the screen instead. */
+.bezel {
+  width: 414px;
+  padding: 12px;
+  border-radius: 52px;
+  background: var(--bezel);
+  box-shadow: 0 22px 50px rgba(6, 20, 50, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  flex: none;
+}
+
+.screen {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  border-radius: 42px;
+  overflow: hidden;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Android: stands in for the drawn status bar, sized by the real one. The
+   minimum keeps the header off the top edge on devices reporting no inset. */
+.safe-top {
+  flex: none;
+  height: max(env(safe-area-inset-top), 8px);
+}
+
+/* Android: the bottom nav must clear the gesture bar. */
+.native .app-nav {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+.notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 112px;
+  height: 26px;
+  border-radius: 16px;
+  background: var(--bezel);
+}
+
+.scroll {
+  overflow: auto;
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx);
+}
+.composer-input::placeholder {
+  color: var(--tx2);
+  font-weight: 600;
+}
+
+/* The rules below also apply unconditionally on Android, where the bezel and
+   the desktop chrome make no sense at any screen size. */
+.native .canvas {
+  padding: 0;
+  gap: 0;
+  height: 100%;
+}
+.native .canvas-chrome {
+  display: none;
+}
+.native .bezel {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.native .screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+@media (max-width: 460px), (max-height: 900px) and (pointer: coarse) {
+  .canvas {
+    padding: 0;
+    gap: 0;
+    height: 100%;
+  }
+  .canvas-chrome {
+    display: none;
+  }
+  .bezel {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .notch {
+    display: none;
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WinNet</string>
+    <string name="title_activity_main">WinNet</string>
+    <string name="package_name">id.net.winartha.winnet</string>
+    <string name="custom_url_scheme">id.net.winartha.winnet</string>
+</resources>

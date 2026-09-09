@@ -1,0 +1,6 @@
+{
+  "name": "@winnet/shared",
+  "private": true,
+  "type": "module",
+  "description": "Types shared by the portal node and the customer app"
+}
